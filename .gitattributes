@@ -1,0 +1,11 @@
+# These scripts are authored on Windows and executed on macOS, so line endings are not cosmetic.
+# A shell script checked out with CRLF fails as "bad interpreter: /usr/bin/env bash^M", which
+# reads like a missing shell rather than a line-ending problem and costs an hour to work out.
+*.sh     text eol=lf
+*.plist  text eol=lf
+
+# PowerShell runs on Windows; leave it native there.
+*.ps1    text eol=crlf
+
+# Everything else: normalise to LF in the repository, check out natively.
+*        text=auto

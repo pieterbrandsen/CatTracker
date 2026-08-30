@@ -33,16 +33,59 @@ echo
 
 bold "1. Cache file"
 if [[ ! -f "$CACHE" ]]; then
-    warn "Not found."
-    echo "     Open the Find My app, let it refresh, and try again."
-    echo "     If it never appears, this approach will not work on your macOS version."
+    # "Not found" and "not allowed to look" are indistinguishable from a [[ -f ]] test, because
+    # TCC makes a protected path fail the same way an absent one does. Ask the directory itself,
+    # which reports the difference.
+    probe="$(ls -ld "$(dirname "$CACHE")" 2>&1 >/dev/null)"
+
+    if [[ "$probe" == *"Operation not permitted"* ]]; then
+        warn "Blocked by macOS privacy protection — not actually missing."
+        echo
+        echo "     Whichever terminal app you are running this in needs Full Disk Access:"
+        echo "       System Settings → Privacy & Security → Full Disk Access → +"
+        echo
+        echo "     Add the app you are typing into RIGHT NOW — Terminal, iTerm, VS Code, Warp —"
+        echo "     the grant is per app. Then QUIT IT COMPLETELY (Cmd-Q) and reopen: the"
+        echo "     permission is only picked up by a freshly launched process."
+        echo
+        echo "     Opening that pane for you now."
+        open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles" 2>/dev/null
+        exit 1
+    fi
+
+    warn "Genuinely not present at the expected path."
+    echo "     Searching for where Find My keeps it on this macOS version..."
+    echo
+
+    found=0
+    while IFS= read -r hit; do
+        [[ -n "$hit" ]] || continue
+        found=1
+        echo "       $hit  ($(stat -f%z "$hit" 2>/dev/null) bytes)"
+    done < <(find "$HOME/Library" -iname "Items.data" -maxdepth 6 2>/dev/null)
+
+    if [[ "$found" -eq 1 ]]; then
+        echo
+        echo "     Re-run against one of those:  $0 <path> [minutes]"
+    else
+        echo "       nothing found."
+        echo
+        echo "     Check: is the AirTag actually paired to THIS Apple ID, and has the Find My"
+        echo "     app been opened and left to refresh on this machine (not just on your phone)?"
+        echo "     If it never appears, this approach does not work on your macOS version and"
+        echo "     the fallback is a DIY OpenHaystack tag — different hardware, different project."
+    fi
+
+    echo
+    echo "     macOS $(sw_vers -productVersion 2>/dev/null)"
     exit 1
 fi
 
 if ! head -c 1 "$CACHE" >/dev/null 2>&1; then
-    warn "Exists but cannot be read."
-    echo "     Terminal needs Full Disk Access:"
-    echo "     System Settings → Privacy & Security → Full Disk Access → add Terminal."
+    warn "Exists but cannot be read — Full Disk Access is missing."
+    echo "     System Settings → Privacy & Security → Full Disk Access → add your terminal app,"
+    echo "     then quit it completely (Cmd-Q) and reopen."
+    open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles" 2>/dev/null
     exit 1
 fi
 
