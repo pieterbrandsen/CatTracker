@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>nl.brandsen.cattracker.app</string>
+
+    <!--
+        The unprivileged half: collector, API and web UI. Needs no special permissions at all,
+        which is what makes updating it a matter of swapping this directory and restarting.
+    -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>__APP__/cattracker</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>__APP__</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>ASPNETCORE_ENVIRONMENT</key>
+        <string>Production</string>
+        <!-- Data, config and logs live outside the install directory, so an update cannot
+             touch them. -->
+        <key>CATTRACKER_CatTracker__DataDirectory</key>
+        <string>__DATA__</string>
+        <key>DOTNET_EnableDiagnostics</key>
+        <string>0</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <key>StandardOutPath</key>
+    <string>__LOGS__/app.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>__LOGS__/app.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

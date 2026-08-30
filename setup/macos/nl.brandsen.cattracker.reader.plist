@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>nl.brandsen.cattracker.reader</string>
+
+    <!--
+        The privileged half: this is the binary that holds Full Disk Access. It is deliberately
+        tiny and effectively frozen, because replacing it revokes that grant and costs you a trip
+        to System Settings. install.sh only touches it when its contents actually changed.
+    -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>__READER__</string>
+        <string>--watch</string>
+        <string>15</string>
+        <string>--spool</string>
+        <string>__SPOOL__</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <key>StandardOutPath</key>
+    <string>__LOGS__/reader.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>__LOGS__/reader.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

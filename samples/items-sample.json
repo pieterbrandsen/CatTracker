@@ -1,0 +1,55 @@
+[
+  {
+    "name": "Pluis",
+    "serialNumber": "SAMPLE0000001",
+    "batteryStatus": 1,
+    "identifier": "00000000-0000-0000-0000-000000000000",
+    "productType": {
+      "type": "b389",
+      "productInformation": {
+        "manufacturerName": "Apple Inc.",
+        "modelName": "AirTag",
+        "productIdentifier": 21760
+      }
+    },
+    "role": {
+      "name": "Pet",
+      "emoji": "🐈",
+      "identifier": 6
+    },
+    "location": {
+      "latitude": 52.09071,
+      "longitude": 5.12143,
+      "timeStamp": 1756556900000,
+      "horizontalAccuracy": 12.5,
+      "verticalAccuracy": 0,
+      "altitude": 3.2,
+      "floorLevel": 0,
+      "isOld": false,
+      "isInaccurate": false,
+      "positionType": "crowdsourced",
+      "locationFinished": true
+    },
+    "address": {
+      "label": "Neude, Utrecht",
+      "streetName": "Neude",
+      "locality": "Utrecht",
+      "country": "Netherlands",
+      "countryCode": "NL"
+    },
+    "safeLocations": [],
+    "isAppleAudioAccessory": false,
+    "systemVersion": "2.0.0"
+  },
+  {
+    "name": "Keys",
+    "serialNumber": "SAMPLE0000002",
+    "batteryStatus": 3,
+    "productType": {
+      "type": "b389",
+      "productInformation": { "modelName": "AirTag" }
+    },
+    "location": null,
+    "address": null
+  }
+]

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AssemblyName>cattracker-reader</AssemblyName>
+    <RootNamespace>CatTracker.Reader</RootNamespace>
+
+    <!--
+      Published as a single trimmed file on purpose: Full Disk Access is granted to one binary,
+      and one file is what you drag into System Settings. This project must stay dependency-free
+      and effectively frozen, because every change to it costs another trip to that panel.
+    -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishTrimmed>true</PublishTrimmed>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+
+</Project>

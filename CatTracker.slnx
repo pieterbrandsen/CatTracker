@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CatTracker.App/CatTracker.App.csproj" />
+    <Project Path="src/CatTracker.Core/CatTracker.Core.csproj" />
+    <Project Path="src/CatTracker.Data/CatTracker.Data.csproj" />
+    <Project Path="src/CatTracker.Reader/CatTracker.Reader.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CatTracker.Tests/CatTracker.Tests.csproj" />
+  </Folder>
+</Solution>

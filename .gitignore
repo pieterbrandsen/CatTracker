@@ -1,0 +1,25 @@
+# Build output
+bin/
+obj/
+out/
+
+# Local runtime data: database, logs, spooled cache, cached map tiles
+.data/
+*.db
+*.db-shm
+*.db-wal
+
+# Test artefacts
+TestResults/
+coverage.cobertura.xml
+
+# Local overrides that must never be committed
+src/CatTracker.App/config.local.json
+**/appsettings.Local.json
+
+# Editors
+.vs/
+.idea/
+*.user
+*.suo
+.DS_Store

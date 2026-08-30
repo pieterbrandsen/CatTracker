@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#5b4bde">
+  <title>CatTracker</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🐈</text></svg>">
+  <link rel="stylesheet" href="/vendor/leaflet.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark">🐈</div>
+      <div class="who">
+        <span id="brand-name">CatTracker</span>
+        <small id="brand-state">connecting…</small>
+      </div>
+    </div>
+
+    <div id="tag-picker" class="tag-picker"></div>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab is-active" data-tab="live" role="tab">Live</button>
+      <button class="tab" data-tab="history" role="tab">History</button>
+      <button class="tab" data-tab="timeline" role="tab">Timeline</button>
+      <button class="tab" data-tab="stats" role="tab">Stats</button>
+      <button class="tab" data-tab="health" role="tab">Health</button>
+      <button class="tab" data-tab="setup" role="tab">Setup</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ---------------------------------------------------------------- Live -->
+    <section id="panel-live" class="panel split is-active">
+      <div class="map-wrap">
+        <div id="map"></div>
+        <div class="overlay legend">
+          <span><i style="background:var(--good)"></i> Home zone</span>
+          <span><i style="background:var(--brand-2)"></i> Last position</span>
+          <span><i style="background:var(--muted)"></i> Accuracy radius</span>
+        </div>
+      </div>
+      <aside class="side">
+        <div id="hero" class="hero state-unknown">
+          <div class="skeleton">Loading…</div>
+        </div>
+
+        <div class="card">
+          <h2>Right now</h2>
+          <div id="live-kpis" class="kpis"></div>
+        </div>
+
+        <div class="card">
+          <h2>Recent alerts <span class="count" id="alert-count">0</span></h2>
+          <ul id="alert-list" class="list"></ul>
+        </div>
+      </aside>
+    </section>
+
+    <!-- ------------------------------------------------------------- History -->
+    <section id="panel-history" class="panel split">
+      <div class="map-wrap">
+        <div id="history-map"></div>
+        <div class="overlay legend">
+          <span><i style="background:var(--brand-2)"></i> Track</span>
+          <span><i style="background:var(--muted)"></i> Gap in data</span>
+          <span><i style="background:var(--warn)"></i> Low confidence</span>
+        </div>
+        <div class="overlay playback" id="playback" hidden>
+          <input type="range" id="playback-range" min="0" max="0" value="0" aria-label="Playback position">
+          <span id="playback-label" class="mono">—</span>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="card">
+          <h2>Range</h2>
+          <div class="chips" id="range-chips">
+            <button class="chip is-active" data-hours="24">24h</button>
+            <button class="chip" data-hours="72">3d</button>
+            <button class="chip" data-hours="168">7d</button>
+            <button class="chip" data-hours="336">14d</button>
+          </div>
+          <div class="form">
+            <label class="check"><input type="checkbox" id="toggle-heatmap"> Dwell heatmap</label>
+            <label class="check"><input type="checkbox" id="toggle-lowconf" checked> Show low-confidence fixes</label>
+            <label class="check"><input type="checkbox" id="toggle-playback"> Playback</label>
+          </div>
+          <div id="history-kpis" class="kpis" style="margin-top:12px"></div>
+        </div>
+
+        <div class="card">
+          <h2>Excursions <span class="count" id="excursion-count">0</span></h2>
+          <ul id="excursion-list" class="list"></ul>
+        </div>
+      </aside>
+    </section>
+
+    <!-- ------------------------------------------------------------ Timeline -->
+    <section id="panel-timeline" class="panel wide">
+      <div class="grid">
+        <div class="card">
+          <h2>What happened</h2>
+          <div class="chips" id="timeline-chips" style="margin-bottom:14px">
+            <button class="chip is-active" data-days="2">2d</button>
+            <button class="chip" data-days="7">7d</button>
+            <button class="chip" data-days="14">14d</button>
+          </div>
+          <div id="timeline" class="timeline"></div>
+        </div>
+
+        <div class="card">
+          <h2>Longest trips</h2>
+          <ul id="top-trips" class="list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------- Stats -->
+    <section id="panel-stats" class="panel wide">
+      <div class="grid">
+        <div class="card span-all">
+          <h2>Time outdoors per day</h2>
+          <p class="muted small">
+            Solid bars are what we actually observed. The pale extension is the upper bound that
+            includes gaps where no phone walked past her.
+          </p>
+          <div id="chart-daily" class="chart"></div>
+          <div class="legend-inline">
+            <span><i style="background:var(--brand)"></i> Observed</span>
+            <span><i style="background:color-mix(in srgb, var(--brand) 28%, transparent)"></i> Including gaps</span>
+          </div>
+        </div>
+
+        <div class="card span-all">
+          <h2>Daily rhythm</h2>
+          <p class="muted small">When she leaves and comes home, by hour of the day.</p>
+          <div id="chart-rhythm" class="chart"></div>
+          <div class="legend-inline">
+            <span><i style="background:var(--warn)"></i> Departures</span>
+            <span><i style="background:var(--info)"></i> Returns</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Roaming</h2>
+          <div id="roaming" class="kpis"></div>
+          <p class="muted small" style="margin-bottom:0">
+            An AirTag has no GPS, so these are estimates over an unevenly sampled signal.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>Favourite spots</h2>
+          <ul id="cluster-list" class="list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- -------------------------------------------------------------- Health -->
+    <section id="panel-health" class="panel wide">
+      <div class="grid">
+        <div class="card">
+          <h2>System checks</h2>
+          <div id="checks" class="checks"></div>
+        </div>
+
+        <div class="card">
+          <h2>Storage</h2>
+          <div id="storage-kpis" class="kpis"></div>
+          <p class="muted small" id="storage-note" style="margin-bottom:0"></p>
+        </div>
+
+        <div class="card span-all">
+          <h2>Logs</h2>
+          <div class="form">
+            <div class="row">
+              <label>File <select id="log-file"></select></label>
+              <label>Lines <input id="log-lines" type="number" min="20" max="5000" value="300"></label>
+              <label>Filter <input id="log-filter" placeholder="Geofence, Excursion, ALERT…"></label>
+            </div>
+            <div class="row" style="flex:0">
+              <button class="btn" id="log-refresh">Refresh</button>
+              <label class="check"><input type="checkbox" id="log-auto"> Auto-refresh</label>
+            </div>
+          </div>
+          <pre id="log-output" class="logbox">—</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------------- Setup -->
+    <section id="panel-setup" class="panel split">
+      <div class="map-wrap">
+        <div id="setup-map"></div>
+        <p class="overlay hint">Click the map to place the selected zone’s centre.</p>
+      </div>
+      <aside class="side">
+        <div class="card">
+          <h2>Zones <span class="count" id="zone-count">0</span></h2>
+          <ul id="zone-list" class="list"></ul>
+          <form id="zone-form" class="form">
+            <input type="hidden" id="zone-id">
+            <label>Name <input id="zone-name" required placeholder="Home"></label>
+            <label>Kind
+              <select id="zone-kind">
+                <option value="Home">Home — drives excursions and stats</option>
+                <option value="Watch">Watch — notify only</option>
+                <option value="Hazard">Hazard — somewhere she should not be</option>
+              </select>
+            </label>
+            <div class="row">
+              <label>Latitude <input id="zone-lat" type="number" step="any" required></label>
+              <label>Longitude <input id="zone-lon" type="number" step="any" required></label>
+            </div>
+            <div class="row">
+              <label>Radius (m) <input id="zone-radius" type="number" min="1" value="30" required></label>
+              <label>Exit buffer (m) <input id="zone-buffer" type="number" min="0" value="25" required></label>
+            </div>
+            <label class="check"><input type="checkbox" id="zone-notify-exit" checked> Notify when she leaves</label>
+            <label class="check"><input type="checkbox" id="zone-notify-enter" checked> Notify when she returns</label>
+            <div class="row">
+              <button type="submit" class="btn primary">Save zone</button>
+              <button type="button" class="btn" id="zone-reset">New</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Cat</h2>
+          <form id="tag-form" class="form">
+            <label>Name <input id="tag-name" required></label>
+            <button type="submit" class="btn primary">Save</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Offline map tiles</h2>
+          <p class="muted small">
+            Downloads the current map view once, so the map keeps working with no internet at all.
+            Keep the area small — OpenStreetMap serves these for free.
+          </p>
+          <div class="form">
+            <div class="row">
+              <label>Min zoom <input id="seed-minz" type="number" min="1" max="19" value="14"></label>
+              <label>Max zoom <input id="seed-maxz" type="number" min="1" max="19" value="18"></label>
+            </div>
+            <button class="btn" id="seed-btn">Seed this view</button>
+          </div>
+          <p id="seed-status" class="muted small mono"></p>
+        </div>
+
+        <div class="card">
+          <h2>Notifications</h2>
+          <p class="muted small">
+            Fires a real alert through every configured channel, so you never have to wonder
+            whether silence means all is well or the thing is broken.
+          </p>
+          <button class="btn" id="test-alert">Send test alert</button>
+          <p id="test-alert-status" class="muted small"></p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script src="/vendor/leaflet.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
