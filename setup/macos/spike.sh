@@ -53,16 +53,41 @@ if [[ ! -f "$CACHE" ]]; then
         exit 1
     fi
 
-    warn "Genuinely not present at the expected path."
-    echo "     Searching for where Find My keeps it on this macOS version..."
+    warn "Not present at the classic path."
     echo
 
+    # Check the known locations first — instant. Apple has moved this data more than once, most
+    # recently out of findmy.fmipcore and into icloud.searchpartyd.
+    echo "     Known locations:"
     found=0
+    for candidate in \
+        "$HOME/Library/Caches/com.apple.findmy.fmipcore" \
+        "$HOME/Library/Caches/com.apple.icloud.searchpartyd" \
+        "$HOME/Library/Containers/com.apple.findmy/Data/Library/Caches/com.apple.findmy.fmipcore" \
+        "$HOME/Library/Group Containers/group.com.apple.icloud.searchpartyd"
+    do
+        probe="$(ls -ld "$candidate" 2>&1 >/dev/null)"
+        if [[ -d "$candidate" ]]; then
+            echo "       [present] $candidate"
+            ls -1 "$candidate" 2>/dev/null | sed 's/^/                   /' | head -12
+            found=1
+        elif [[ "$probe" == *"Operation not permitted"* ]]; then
+            echo "       [blocked] $candidate  — needs Full Disk Access"
+            found=1
+        else
+            echo "       [absent ] $candidate"
+        fi
+    done
+
+    echo
+    echo "     Searching the likely subtrees (a few seconds)..."
     while IFS= read -r hit; do
         [[ -n "$hit" ]] || continue
         found=1
         echo "       $hit  ($(stat -f%z "$hit" 2>/dev/null) bytes)"
-    done < <(find "$HOME/Library" -iname "Items.data" -maxdepth 6 2>/dev/null)
+    done < <(find "$HOME/Library/Caches" "$HOME/Library/Containers" "$HOME/Library/Group Containers" \
+                  -maxdepth 5 \( -iname "Items.data" -o -iname "OwnedBeacons*" -o -iname "BeaconNamingRecord*" \) \
+                  2>/dev/null)
 
     if [[ "$found" -eq 1 ]]; then
         echo

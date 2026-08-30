@@ -30,8 +30,36 @@ claim, and it is what you should set `FindMy:StaleAfterMinutes` from. Write it d
 If the spike fails, **stop**. The fallback is a DIY OpenHaystack tag whose keys you own — a
 different project with different hardware.
 
-> The spike needs Terminal to have Full Disk Access
-> (System Settings → Privacy & Security → Full Disk Access → add Terminal).
+> The spike needs your terminal app to have Full Disk Access (System Settings → Privacy &
+> Security → Full Disk Access). The grant is **per app** — adding Terminal does nothing for
+> iTerm, VS Code or Warp — and the app must be **fully quit** (⌘Q) and reopened, because the
+> permission is only picked up by a freshly launched process. Running the spike over SSH does not
+> work either: that would need the grant on Remote Login, so sit at the Mac.
+
+### "Cache not found" — check the Items tab before anything else
+
+By far the most common Phase 0 failure, and it looks like the project is dead when it is not.
+
+**The cache is written by the Mac's own Find My when it fetches your accessories.** It is not
+synced from your phone. So if the Mac's Find My has no items, no cache is ever created — and the
+AirTag showing up perfectly on your iPhone tells you nothing about the Mac.
+
+Open Find My on the Mac and click the **Items** tab. If the AirTag is not listed:
+
+| Check | Where |
+|---|---|
+| The Mac is on the **same Apple ID** the AirTag is paired to | System Settings → *your name*. A second or work account will never show it. |
+| **Find My Mac** is switched on | System Settings → *your name* → iCloud → Find My Mac. A Mac can be signed into iCloud with this off, and Find My then opens happily showing nothing. |
+
+From a terminal:
+
+```bash
+defaults read MobileMeAccounts 2>/dev/null | grep -E 'AccountID|LoggedIn'
+```
+
+Once the AirTag appears under Items, wait a minute and re-run the spike. Only if it is listed
+there *and* the cache directory still does not exist have you found a genuine macOS-version
+change — which is the real no-go, and points at a DIY OpenHaystack tag instead.
 
 ---
 
