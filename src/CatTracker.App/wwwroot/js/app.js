@@ -77,6 +77,29 @@ const esc = (value) => String(value).replace(/[&<>"']/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /**
+ * Fetches a track, keeping the true totals separate from the points actually drawn.
+ *
+ * The server thins the body so the map stays responsive, so `fixes.length` is not how many fixes
+ * there were, and coverage computed from it would invent gaps that never happened. Both real
+ * figures come back in headers, measured on the full set.
+ */
+async function fetchTrack(tagId, from, to, max = 6000) {
+  const response = await fetch(`/api/fixes?tagId=${tagId}&from=${from}&to=${to}&max=${max}`);
+  if (!response.ok) throw new Error((await response.text()) || response.statusText);
+
+  const fixes = await response.json();
+  const total = Number(response.headers.get('X-Total-Fixes'));
+  const coverage = Number(response.headers.get('X-Coverage'));
+
+  return {
+    fixes,
+    total: Number.isFinite(total) && total > 0 ? total : fixes.length,
+    coverage: Number.isFinite(coverage) ? coverage : coverageOf(fixes, from, to),
+    sampled: Number.isFinite(total) && total > fixes.length,
+  };
+}
+
+/**
  * Frames a set of fixes on a map.
  *
  * Two things have to be right or the view ends up uselessly wide. The container must have been
@@ -398,11 +421,13 @@ async function loadHistory() {
   const from = to - state.historyHours * 3600 * 1000;
   const map = state.maps.history;
 
-  const [fixes, excursions, zones] = await Promise.all([
-    api(`/api/fixes?tagId=${state.tagId}&from=${from}&to=${to}&max=6000`),
+  const [track, excursions, zones] = await Promise.all([
+    fetchTrack(state.tagId, from, to),
     api(`/api/excursions?tagId=${state.tagId}&from=${from}&to=${to}`),
     api('/api/zones'),
   ]);
+
+  const fixes = track.fixes;
 
   state.historyFixes = fixes;
   drawZones(map, zones, 'historyZones');

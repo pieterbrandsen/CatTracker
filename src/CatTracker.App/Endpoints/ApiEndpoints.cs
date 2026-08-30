@@ -1,3 +1,4 @@
+using System.Globalization;
 using CatTracker.App.Alerting;
 using CatTracker.App.Readers;
 using CatTracker.App.Services;
@@ -193,10 +194,19 @@ public static class ApiEndpoints
     private static void MapFixes(RouteGroupBuilder api)
     {
         api.MapGet("/fixes", (
-            Repository repository, long tagId, long? from, long? to, int? max) =>
+            HttpContext http, Repository repository, long tagId, long? from, long? to, int? max) =>
         {
             var (start, end) = Window(from, to, TimeSpan.FromHours(24));
             var fixes = repository.GetFixes(tagId, start, end);
+
+            // The body is thinned for the map's sake, so counting it would understate the truth
+            // and — worse — computing coverage from it would invent gaps that never happened.
+            // Both numbers are therefore taken from the full set and sent alongside.
+            http.Response.Headers["X-Total-Fixes"] =
+                fixes.Count.ToString(CultureInfo.InvariantCulture);
+            http.Response.Headers["X-Coverage"] =
+                Stats.CoverageRatio(fixes, start, end).ToString("F4", CultureInfo.InvariantCulture);
+
             return Results.Ok(Decimate(fixes, Math.Clamp(max ?? 5000, 100, 100_000)));
         });
     }
