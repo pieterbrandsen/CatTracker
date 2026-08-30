@@ -87,6 +87,19 @@ public class TileCacheTests : IDisposable
     }
 
     [Fact]
+    public async Task AnAbandonedTileRequest_IsNotAnError()
+    {
+        // Every pan and zoom cancels the tiles still in flight. That is routine, and must not
+        // surface as an unhandled exception and a 500 in the log.
+        var cache = NewCache(new StubTileHandler());
+
+        using var abandoned = new CancellationTokenSource();
+        await abandoned.CancelAsync();
+
+        Assert.Null(await cache.GetAsync(new TileRef(16, 5, 5), abandoned.Token));
+    }
+
+    [Fact]
     public async Task AnUpstreamErrorIsNotCached()
     {
         var handler = new StubTileHandler(HttpStatusCode.TooManyRequests);

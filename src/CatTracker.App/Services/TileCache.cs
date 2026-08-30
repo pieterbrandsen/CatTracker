@@ -58,7 +58,18 @@ public sealed class TileCache(
             .Replace("{x}", tile.X.ToString())
             .Replace("{y}", tile.Y.ToString());
 
-        await _upstream.WaitAsync(cancellationToken);
+        // Queueing for an upstream slot throws on cancellation like anything else. This sat
+        // outside the try below, so a browser abandoning a tile — which happens on every pan and
+        // zoom — escaped as an unhandled exception and a 500.
+        try
+        {
+            await _upstream.WaitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+
         try
         {
             using var response = await http.GetAsync(url, cancellationToken);
@@ -71,8 +82,16 @@ public sealed class TileCache(
 
             return await response.Content.ReadAsByteArrayAsync(cancellationToken);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // The viewer panned away before this tile arrived. Completely routine — logging it
+            // would bury the real entries under a wall of noise every time the map moves.
+            return null;
+        }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
+            // A cancellation with our own token still healthy is the HttpClient timeout instead,
+            // which is worth a quiet word.
             logger.LogDebug(ex, "Tile {Z}/{X}/{Y} fetch failed", tile.Z, tile.X, tile.Y);
             return null;
         }
