@@ -32,7 +32,7 @@
       carries several high-severity advisories. Design-time only, but pinned forward regardless —
       a build that reports vulnerabilities you have decided to ignore soon reports nothing at all.
     -->
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.11">
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
